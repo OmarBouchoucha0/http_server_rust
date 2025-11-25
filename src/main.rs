@@ -7,8 +7,17 @@ use std::{
 fn handle_connection(mut stream: TcpStream) -> Result<(), std::io::Error> {
     println!("Connection established from: {:?}", stream.peer_addr()?);
     let buf_reader = BufReader::new(&stream);
-    let request_line = buf_reader.lines().next().unwrap().unwrap();
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .filter_map(|result| result.ok())
+        .take_while(|line| !line.is_empty())
+        .collect();
 
+    if http_request.is_empty() {
+        return Ok(());
+    }
+
+    let request_line = &http_request[0];
     let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
         ("HTTP/1.1 200 OK", "hello.html")
     } else {
@@ -20,6 +29,7 @@ fn handle_connection(mut stream: TcpStream) -> Result<(), std::io::Error> {
     let response = format!("{status_line}\r\nContent-Length: {length}\r\n\r\n{contents}");
 
     stream.write_all(response.as_bytes()).unwrap();
+    stream.flush()?;
     Ok(())
 }
 
