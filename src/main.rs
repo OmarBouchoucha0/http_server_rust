@@ -1,9 +1,26 @@
-use std::net::TcpListener;
+use std::{
+    io::{BufRead, BufReader, Write},
+    net::{TcpListener, TcpStream},
+};
 
-fn main() {
+fn handle_connection(mut stream: TcpStream) {
+    let buf_reader = BufReader::new(&stream);
+    let http_request: Vec<_> = buf_reader
+        .lines()
+        .filter_map(|result| result.ok())
+        .take_while(|line| line.is_empty())
+        .collect();
+
+    println!("Request: {http_request:?}");
+    let response = "HTTP/1.1 200 OK\r\n\r\n";
+    stream.write_all(response.as_bytes()).unwrap();
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
     for streams in listener.incoming() {
-        let stream = streams.unwrap();
-        println!("Connection Established");
+        let stream = streams?;
+        handle_connection(stream);
     }
+    Ok(())
 }
