@@ -1,10 +1,12 @@
+#[cfg(test)]
+mod tests;
 use std::{
     fs,
     io::{BufRead, BufReader, Write},
     net::{TcpListener, TcpStream},
     thread,
 };
-fn read_request(stream: &TcpStream) -> Vec<String> {
+pub fn read_request(stream: &TcpStream) -> Vec<String> {
     let buf_reader = BufReader::new(stream);
     let http_request: Vec<_> = buf_reader
         .lines()
@@ -13,7 +15,7 @@ fn read_request(stream: &TcpStream) -> Vec<String> {
         .collect();
     http_request
 }
-fn parse_request<'a>(http_request: Vec<String>) -> (&'a str, &'a str) {
+pub fn parse_request<'a>(http_request: Vec<String>) -> (&'a str, &'a str) {
     let request_line = &http_request[0];
     let (status_line, filename) = if request_line == "GET / HTTP/1.1" {
         ("HTTP/1.1 200 OK", "hello.html")
@@ -23,7 +25,7 @@ fn parse_request<'a>(http_request: Vec<String>) -> (&'a str, &'a str) {
     (status_line, filename)
 }
 
-fn handle_connection(mut stream: TcpStream) -> Result<(), std::io::Error> {
+pub fn handle_connection(mut stream: TcpStream) -> Result<(), std::io::Error> {
     println!("Connection established from: {:?}", stream.peer_addr()?);
     let http_request = read_request(&stream);
     if http_request.is_empty() {
