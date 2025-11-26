@@ -26,11 +26,9 @@ fn parse_request<'a>(http_request: Vec<String>) -> (&'a str, &'a str) {
 fn handle_connection(mut stream: TcpStream) -> Result<(), std::io::Error> {
     println!("Connection established from: {:?}", stream.peer_addr()?);
     let http_request = read_request(&stream);
-
     if http_request.is_empty() {
         return Ok(());
-    }
-
+    };
     let (status_line, filename) = parse_request(http_request);
 
     let contents = fs::read_to_string(filename).unwrap();
@@ -48,8 +46,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let stream = streams?;
         thread::spawn(move || {
             if let Err(e) = handle_connection(stream) {
-                return e;
-            };
+                eprintln!("Worker thread failed with error: {}", e);
+            }
         });
     }
     Ok(())
