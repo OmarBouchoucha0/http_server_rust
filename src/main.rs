@@ -41,16 +41,18 @@ pub fn handle_connection(mut stream: TcpStream) -> Result<(), std::io::Error> {
     stream.flush()?;
     Ok(())
 }
-
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
-    for streams in listener.incoming() {
+pub fn run_server(listner: TcpListener) -> Result<(), Box<dyn std::error::Error>> {
+    for streams in listner.incoming() {
         let stream = streams?;
-        thread::spawn(move || {
-            if let Err(e) = handle_connection(stream) {
-                eprintln!("Worker thread failed with error: {}", e);
-            }
+        thread::spawn(move || -> Result<(), std::io::Error> {
+            handle_connection(stream)?;
+            Ok(())
         });
     }
     Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let listner = TcpListener::bind("127.0.0.1:7878").unwrap();
+    run_server(listner)
 }
